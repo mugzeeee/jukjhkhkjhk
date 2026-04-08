@@ -1,21 +1,3 @@
--- Script Selector Hub
--- Intercepts the key press and shows a picker before launching either script
-
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
-
--- ─────────────────────────────────────────────
--- CONFIG: change this key to whatever you use
--- ─────────────────────────────────────────────
-local TOGGLE_KEY = Enum.KeyCode.RightShift
-
--- ─────────────────────────────────────────────
--- PASTE YOUR FULL MOXY SCRIPT BELOW THIS LINE
--- and wrap it in a function like this:
--- ─────────────────────────────────────────────
-local function LaunchChatbot()
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
@@ -7528,6 +7510,158 @@ local KEY_DIM    = Color3.fromRGB(130, 130, 145)
 local KEY_ERR    = Color3.fromRGB(240, 80, 80)
 local KEY_OK     = Color3.fromRGB(80, 220, 140)
 
+local function showSelectionScreen()
+    local selGui = Instance.new("ScreenGui")
+    selGui.Name = "MoxySelectionScreen"
+    selGui.ResetOnSpawn = false
+    selGui.DisplayOrder = 9999
+    pcall(function() selGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling end)
+    selGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+    local backdrop = Instance.new("Frame")
+    backdrop.Size = UDim2.new(1, 0, 1, 0)
+    backdrop.BackgroundColor3 = KEY_BG
+    backdrop.BackgroundTransparency = 0
+    backdrop.BorderSizePixel = 0
+    backdrop.ZIndex = 1
+    backdrop.Parent = selGui
+
+    local grad = Instance.new("UIGradient")
+    grad.Rotation = 90
+    grad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 10, 50)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 8, 10)),
+    })
+    grad.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.5),
+        NumberSequenceKeypoint.new(1, 0),
+    })
+    grad.Parent = backdrop
+
+    local card = Instance.new("Frame")
+    card.Size = UDim2.new(0, 420, 0, 280)
+    card.AnchorPoint = Vector2.new(0.5, 0.5)
+    card.Position = UDim2.new(0.5, 0, 0.5, 0)
+    card.BackgroundColor3 = KEY_CARD
+    card.BackgroundTransparency = 0
+    card.BorderSizePixel = 0
+    card.ZIndex = 2
+    card.Parent = selGui
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 14)
+    corner.Parent = card
+    
+    local cardStroke = Instance.new("UIStroke")
+    cardStroke.Color = KEY_ACCENT
+    cardStroke.Transparency = 0.6
+    cardStroke.Thickness = 2
+    cardStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    cardStroke.Parent = card
+
+    local titleLbl = Instance.new("TextLabel")
+    titleLbl.Size = UDim2.new(1, 0, 0, 32)
+    titleLbl.Position = UDim2.new(0, 0, 0, 32)
+    titleLbl.BackgroundTransparency = 1
+    titleLbl.Text = "Select Script"
+    titleLbl.Font = Enum.Font.GothamBold
+    titleLbl.TextSize = 24
+    titleLbl.TextColor3 = KEY_TEXT
+    titleLbl.TextXAlignment = Enum.TextXAlignment.Center
+    titleLbl.ZIndex = 3
+    titleLbl.Parent = card
+
+    local subLbl = Instance.new("TextLabel")
+    subLbl.Size = UDim2.new(1, 0, 0, 20)
+    subLbl.Position = UDim2.new(0, 0, 0, 68)
+    subLbl.BackgroundTransparency = 1
+    subLbl.Text = "Choose which script you want to load"
+    subLbl.Font = Enum.Font.Gotham
+    subLbl.TextSize = 13
+    subLbl.TextColor3 = KEY_DIM
+    subLbl.TextXAlignment = Enum.TextXAlignment.Center
+    subLbl.ZIndex = 3
+    subLbl.Parent = card
+
+    -- Chatbot Button
+    local chatBtn = Instance.new("TextButton")
+    chatBtn.Size = UDim2.new(0.5, -36, 0, 110)
+    chatBtn.Position = UDim2.new(0, 24, 0, 130)
+    chatBtn.BackgroundColor3 = KEY_ACCENT
+    chatBtn.BackgroundTransparency = 0.1
+    chatBtn.BorderSizePixel = 0
+    chatBtn.Text = "Chatbot"
+    chatBtn.Font = Enum.Font.GothamBold
+    chatBtn.TextSize = 18
+    chatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    chatBtn.AutoButtonColor = false
+    chatBtn.ZIndex = 3
+    chatBtn.Parent = card
+    
+    local chatCorner = Instance.new("UICorner")
+    chatCorner.CornerRadius = UDim.new(0, 10)
+    chatCorner.Parent = chatBtn
+
+    -- Blade Ball Button
+    local bbBtn = Instance.new("TextButton")
+    bbBtn.Size = UDim2.new(0.5, -36, 0, 110)
+    bbBtn.Position = UDim2.new(0.5, 12, 0, 130)
+    bbBtn.BackgroundColor3 = KEY_ACCENT
+    bbBtn.BackgroundTransparency = 0.1
+    bbBtn.BorderSizePixel = 0
+    bbBtn.Text = "Blade Ball"
+    bbBtn.Font = Enum.Font.GothamBold
+    bbBtn.TextSize = 18
+    bbBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    bbBtn.AutoButtonColor = false
+    bbBtn.ZIndex = 3
+    bbBtn.Parent = card
+
+    local bbCorner = Instance.new("UICorner")
+    bbCorner.CornerRadius = UDim.new(0, 10)
+    bbCorner.Parent = bbBtn
+
+    -- Hover animations
+    local ts = game:GetService("TweenService")
+    local function applyHover(btn)
+        btn.MouseEnter:Connect(function()
+            ts:Create(btn, TweenInfo.new(0.15), {
+                BackgroundTransparency = 0,
+                BackgroundColor3 = Color3.fromRGB(164, 61, 255),
+            }):Play()
+        end)
+        btn.MouseLeave:Connect(function()
+            ts:Create(btn, TweenInfo.new(0.15), {
+                BackgroundTransparency = 0.1,
+                BackgroundColor3 = KEY_ACCENT,
+            }):Play()
+        end)
+    end
+    applyHover(chatBtn)
+    applyHover(bbBtn)
+
+    -- Click events
+    chatBtn.MouseButton1Click:Connect(function()
+        ts:Create(backdrop, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+        ts:Create(card, TweenInfo.new(0.4), {Position = UDim2.new(0.5, 0, 0.35, 0), BackgroundTransparency = 1}):Play()
+        ts:Create(cardStroke, TweenInfo.new(0.2), {Transparency = 1}):Play()
+        chatBtn.Text = "Loading..."
+        task.wait(0.5)
+        selGui:Destroy()
+        createInterface()
+    end)
+
+    bbBtn.MouseButton1Click:Connect(function()
+        ts:Create(backdrop, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+        ts:Create(card, TweenInfo.new(0.4), {Position = UDim2.new(0.5, 0, 0.35, 0), BackgroundTransparency = 1}):Play()
+        ts:Create(cardStroke, TweenInfo.new(0.2), {Transparency = 1}):Play()
+        bbBtn.Text = "Loading..."
+        task.wait(0.5)
+        selGui:Destroy()
+        loadstring(game:HttpGet("https://pastebin.com/raw/ab5n2ckT", true))()
+    end)
+end
+
 local function showKeyScreen()
     local keyGui = Instance.new("ScreenGui")
     keyGui.Name = "MoxyKeySystem"
@@ -7814,7 +7948,7 @@ local function showKeyScreen()
 
                 task.wait(0.5)
                 keyGui:Destroy()
-                createInterface()
+                showSelectionScreen()
             else
                 setStatus("Invalid key. Check your key and try again.", KEY_ERR)
                 shakeCard()
@@ -7839,695 +7973,4 @@ local function showKeyScreen()
     end)
 end
 
-showKeyScreen()end
-
--- ─────────────────────────────────────────────
--- BLADE BALL ESP + AUTO PARRY SCRIPT
--- ─────────────────────────────────────────────
-local function LaunchBladeBall()
-    local Players2 = game:GetService("Players")
-    local RunService2 = game:GetService("RunService")
-    local UserInputService2 = game:GetService("UserInputService")
-    local VirtualInputManager = game:GetService("VirtualInputManager")
-    local TweenService2 = game:GetService("TweenService")
-
-    local Player = Players2.LocalPlayer
-    local connections = {}
-    local highlights = {}
-
-    local CFG = {
-        ESPEnabled    = true,
-        PredEnabled   = true,
-        ParryEnabled  = true,
-        PredTime      = 0.55,
-        ParryWindow   = 0.50,
-        MinSpeed      = 35,
-        ParryDelay    = 0.012,
-        ParryCooldown = 0.50,
-    }
-
-    local Parried = false
-    local parryCount = 0
-
-    local BOX_COL  = Color3.fromRGB(0, 160, 255)
-    local WARN_COL = Color3.fromRGB(255, 70, 70)
-    local PRED_COL = Color3.fromRGB(255, 210, 0)
-    local GREEN    = Color3.fromRGB(50, 210, 100)
-    local MUTED    = Color3.fromRGB(120, 120, 150)
-    local TEXT_COL = Color3.fromRGB(210, 220, 255)
-    local ACCENT   = Color3.fromRGB(138, 43, 226)
-
-    local function GetRealBall()
-        local balls = workspace:FindFirstChild("Balls")
-        if not balls then return nil end
-        for _, b in ipairs(balls:GetChildren()) do
-            if b:IsA("Part") and b:GetAttribute("realBall") == true then return b end
-        end
-        return nil
-    end
-
-    local function GetBallVelocity(ball)
-        if ball:FindFirstChild("zoomies") then return ball.zoomies.VectorVelocity end
-        return ball.AssemblyLinearVelocity
-    end
-
-    -- GUI
-    local sg = Instance.new("ScreenGui")
-    sg.Name = "BladeBall_UI"
-    sg.ResetOnSpawn = false
-    sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    sg.DisplayOrder = 999
-    sg.Parent = game.CoreGui
-
-    local win = Instance.new("Frame")
-    win.Size = UDim2.new(0, 230, 0, 10)
-    win.Position = UDim2.new(0, 24, 0.5, -170)
-    win.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
-    win.BorderSizePixel = 0
-    win.Active = true
-    win.Draggable = true
-    win.ClipsDescendants = true
-    win.Parent = sg
-    Instance.new("UICorner", win).CornerRadius = UDim.new(0, 10)
-    local ws = Instance.new("UIStroke", win)
-    ws.Color = Color3.fromRGB(50, 50, 70)
-    ws.Thickness = 1
-
-    local titleBar = Instance.new("Frame")
-    titleBar.Size = UDim2.new(1, 0, 0, 38)
-    titleBar.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
-    titleBar.BorderSizePixel = 0
-    titleBar.Parent = win
-    Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 10)
-    local tbFix = Instance.new("Frame", titleBar)
-    tbFix.Size = UDim2.new(1, 0, 0.5, 0)
-    tbFix.Position = UDim2.new(0, 0, 0.5, 0)
-    tbFix.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
-    tbFix.BorderSizePixel = 0
-
-    local ico = Instance.new("Frame", titleBar)
-    ico.Size = UDim2.new(0, 8, 0, 8)
-    ico.Position = UDim2.new(0, 12, 0.5, -4)
-    ico.BackgroundColor3 = GREEN
-    ico.BorderSizePixel = 0
-    Instance.new("UICorner", ico).CornerRadius = UDim.new(1, 0)
-
-    local titleLbl = Instance.new("TextLabel", titleBar)
-    titleLbl.Size = UDim2.new(1, -32, 1, 0)
-    titleLbl.Position = UDim2.new(0, 26, 0, 0)
-    titleLbl.BackgroundTransparency = 1
-    titleLbl.Text = "Blade Ball  ·  ESP + Parry"
-    titleLbl.TextColor3 = Color3.fromRGB(220, 220, 255)
-    titleLbl.Font = Enum.Font.GothamBold
-    titleLbl.TextSize = 12
-    titleLbl.TextXAlignment = Enum.TextXAlignment.Left
-
-    local content = Instance.new("Frame", win)
-    content.Size = UDim2.new(1, -16, 1, -46)
-    content.Position = UDim2.new(0, 8, 0, 42)
-    content.BackgroundTransparency = 1
-
-    local listLayout = Instance.new("UIListLayout", content)
-    listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    listLayout.Padding = UDim.new(0, 4)
-    listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        win.Size = UDim2.new(0, 230, 0, listLayout.AbsoluteContentSize.Y + 54)
-    end)
-
-    local order = 0
-    local function nextOrder() order += 1 return order end
-
-    local function MakeSection(text)
-        local lbl = Instance.new("TextLabel", content)
-        lbl.Size = UDim2.new(1, 0, 0, 20)
-        lbl.BackgroundTransparency = 1
-        lbl.Text = text
-        lbl.TextColor3 = Color3.fromRGB(80, 80, 110)
-        lbl.Font = Enum.Font.GothamBold
-        lbl.TextSize = 10
-        lbl.TextXAlignment = Enum.TextXAlignment.Left
-        lbl.LayoutOrder = nextOrder()
-    end
-
-    local function MakeStat(label)
-        local row = Instance.new("Frame", content)
-        row.Size = UDim2.new(1, 0, 0, 26)
-        row.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
-        row.BorderSizePixel = 0
-        row.LayoutOrder = nextOrder()
-        Instance.new("UICorner", row).CornerRadius = UDim.new(0, 6)
-        local l = Instance.new("TextLabel", row)
-        l.Size = UDim2.new(0.5, 0, 1, 0)
-        l.Position = UDim2.new(0, 8, 0, 0)
-        l.BackgroundTransparency = 1
-        l.Text = label
-        l.TextColor3 = MUTED
-        l.Font = Enum.Font.Gotham
-        l.TextSize = 11
-        l.TextXAlignment = Enum.TextXAlignment.Left
-        local v = Instance.new("TextLabel", row)
-        v.Size = UDim2.new(0.5, -8, 1, 0)
-        v.Position = UDim2.new(0.5, 0, 0, 0)
-        v.BackgroundTransparency = 1
-        v.Text = "—"
-        v.TextColor3 = TEXT_COL
-        v.Font = Enum.Font.GothamBold
-        v.TextSize = 11
-        v.TextXAlignment = Enum.TextXAlignment.Right
-        return v
-    end
-
-    local function MakeToggle(label, default, callback)
-        local row = Instance.new("Frame", content)
-        row.Size = UDim2.new(1, 0, 0, 28)
-        row.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
-        row.BorderSizePixel = 0
-        row.LayoutOrder = nextOrder()
-        Instance.new("UICorner", row).CornerRadius = UDim.new(0, 6)
-        local l = Instance.new("TextLabel", row)
-        l.Size = UDim2.new(0.65, 0, 1, 0)
-        l.Position = UDim2.new(0, 8, 0, 0)
-        l.BackgroundTransparency = 1
-        l.Text = label
-        l.TextColor3 = TEXT_COL
-        l.Font = Enum.Font.Gotham
-        l.TextSize = 11
-        l.TextXAlignment = Enum.TextXAlignment.Left
-        local state = default
-        local track = Instance.new("Frame", row)
-        track.Size = UDim2.new(0, 36, 0, 18)
-        track.Position = UDim2.new(1, -46, 0.5, -9)
-        track.BackgroundColor3 = state and GREEN or Color3.fromRGB(60, 60, 80)
-        track.BorderSizePixel = 0
-        Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
-        local thumb = Instance.new("Frame", track)
-        thumb.Size = UDim2.new(0, 12, 0, 12)
-        thumb.Position = state and UDim2.new(1, -15, 0.5, -6) or UDim2.new(0, 3, 0.5, -6)
-        thumb.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        thumb.BorderSizePixel = 0
-        Instance.new("UICorner", thumb).CornerRadius = UDim.new(1, 0)
-        local btn = Instance.new("TextButton", row)
-        btn.Size = UDim2.fromScale(1, 1)
-        btn.BackgroundTransparency = 1
-        btn.Text = ""
-        btn.MouseButton1Click:Connect(function()
-            state = not state
-            TweenService2:Create(track, TweenInfo.new(0.15), {BackgroundColor3 = state and GREEN or Color3.fromRGB(60,60,80)}):Play()
-            TweenService2:Create(thumb, TweenInfo.new(0.15), {Position = state and UDim2.new(1,-15,0.5,-6) or UDim2.new(0,3,0.5,-6)}):Play()
-            callback(state)
-        end)
-    end
-
-    local function MakeSlider(label, min, max, default, fmt, callback)
-        local row = Instance.new("Frame", content)
-        row.Size = UDim2.new(1, 0, 0, 42)
-        row.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
-        row.BorderSizePixel = 0
-        row.LayoutOrder = nextOrder()
-        Instance.new("UICorner", row).CornerRadius = UDim.new(0, 6)
-        local lbl = Instance.new("TextLabel", row)
-        lbl.Size = UDim2.new(0.6, 0, 0, 20)
-        lbl.Position = UDim2.new(0, 8, 0, 3)
-        lbl.BackgroundTransparency = 1
-        lbl.Text = label
-        lbl.TextColor3 = TEXT_COL
-        lbl.Font = Enum.Font.Gotham
-        lbl.TextSize = 11
-        lbl.TextXAlignment = Enum.TextXAlignment.Left
-        local valLbl = Instance.new("TextLabel", row)
-        valLbl.Size = UDim2.new(0.38, 0, 0, 20)
-        valLbl.Position = UDim2.new(0.6, 0, 0, 3)
-        valLbl.BackgroundTransparency = 1
-        valLbl.Text = string.format(fmt, default)
-        valLbl.TextColor3 = Color3.fromRGB(100, 180, 255)
-        valLbl.Font = Enum.Font.GothamBold
-        valLbl.TextSize = 11
-        valLbl.TextXAlignment = Enum.TextXAlignment.Right
-        local track = Instance.new("Frame", row)
-        track.Size = UDim2.new(1, -16, 0, 4)
-        track.Position = UDim2.new(0, 8, 0, 28)
-        track.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
-        track.BorderSizePixel = 0
-        Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
-        local fill = Instance.new("Frame", track)
-        fill.Size = UDim2.new((default-min)/(max-min), 0, 1, 0)
-        fill.BackgroundColor3 = Color3.fromRGB(0, 160, 255)
-        fill.BorderSizePixel = 0
-        Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
-        local knob = Instance.new("Frame", track)
-        knob.Size = UDim2.new(0, 12, 0, 12)
-        knob.AnchorPoint = Vector2.new(0.5, 0.5)
-        knob.Position = UDim2.new((default-min)/(max-min), 0, 0.5, 0)
-        knob.BackgroundColor3 = Color3.fromRGB(255,255,255)
-        knob.BorderSizePixel = 0
-        Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
-        local dragging = false
-        local function update(inputX)
-            local pct = math.clamp((inputX - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-            local val = math.floor((min + (max-min)*pct)*100+0.5)/100
-            fill.Size = UDim2.new(pct, 0, 1, 0)
-            knob.Position = UDim2.new(pct, 0, 0.5, 0)
-            valLbl.Text = string.format(fmt, val)
-            callback(val)
-        end
-        track.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging=true update(i.Position.X) end end)
-        UserInputService2.InputChanged:Connect(function(i) if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then update(i.Position.X) end end)
-        UserInputService2.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging=false end end)
-    end
-
-    local function MakeDivider()
-        local d = Instance.new("Frame", content)
-        d.Size = UDim2.new(1, 0, 0, 1)
-        d.BackgroundColor3 = Color3.fromRGB(40, 40, 58)
-        d.BorderSizePixel = 0
-        d.LayoutOrder = nextOrder()
-    end
-
-    MakeSection("  LIVE STATS")
-    local distVal   = MakeStat("Distance")
-    local velVal    = MakeStat("Velocity")
-    local targetVal = MakeStat("Target")
-    local predVal   = MakeStat("Pred. pos")
-    local parryVal  = MakeStat("Parry state")
-    local countVal  = MakeStat("Parries")
-    MakeDivider()
-    MakeSection("  FEATURES")
-    MakeToggle("ESP Boxes", CFG.ESPEnabled, function(v)
-        CFG.ESPEnabled = v
-        ico.BackgroundColor3 = v and GREEN or WARN_COL
-        if not v then for b in pairs(highlights) do
-            pcall(function() highlights[b].box:Destroy() highlights[b].billboard:Destroy() end)
-            highlights[b] = nil
-        end end
-    end)
-    MakeToggle("Prediction Sphere", CFG.PredEnabled, function(v)
-        CFG.PredEnabled = v
-        predPart.Transparency = v and 0.35 or 1
-    end)
-    MakeToggle("Auto Parry", CFG.ParryEnabled, function(v)
-        CFG.ParryEnabled = v
-    end)
-    MakeDivider()
-    MakeSection("  PARRY SETTINGS")
-    MakeSlider("Parry window (s)", 0.2, 1.0, CFG.ParryWindow, "%.2fs", function(v) CFG.ParryWindow = v end)
-    MakeSlider("Min speed", 10, 100, CFG.MinSpeed, "%.0f s/s", function(v) CFG.MinSpeed = v end)
-    MakeSlider("Predict time (s)", 0.1, 1.5, CFG.PredTime, "%.2fs", function(v) CFG.PredTime = v end)
-    MakeDivider()
-
-    local unloadRow = Instance.new("TextButton", content)
-    unloadRow.Size = UDim2.new(1, 0, 0, 30)
-    unloadRow.BackgroundColor3 = Color3.fromRGB(100, 22, 22)
-    unloadRow.BorderSizePixel = 0
-    unloadRow.Text = "⏹  UNLOAD SCRIPT"
-    unloadRow.TextColor3 = Color3.fromRGB(255, 180, 180)
-    unloadRow.Font = Enum.Font.GothamBold
-    unloadRow.TextSize = 11
-    unloadRow.LayoutOrder = nextOrder()
-    Instance.new("UICorner", unloadRow).CornerRadius = UDim.new(0, 6)
-    unloadRow.MouseEnter:Connect(function() TweenService2:Create(unloadRow, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(160,30,30)}):Play() end)
-    unloadRow.MouseLeave:Connect(function() TweenService2:Create(unloadRow, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(100,22,22)}):Play() end)
-
-    -- Prediction part
-    local predPart = Instance.new("Part")
-    predPart.Name = "BallPrediction"
-    predPart.Size = Vector3.new(1.4, 1.4, 1.4)
-    predPart.Shape = Enum.PartType.Ball
-    predPart.Anchored = true
-    predPart.CanCollide = false
-    predPart.CastShadow = false
-    predPart.Material = Enum.Material.Neon
-    predPart.Color = PRED_COL
-    predPart.Transparency = 0.35
-    predPart.Parent = workspace
-    local predBB = Instance.new("BillboardGui", workspace)
-    predBB.Size = UDim2.new(0, 70, 0, 18)
-    predBB.StudsOffset = Vector3.new(0, 1.8, 0)
-    predBB.AlwaysOnTop = true
-    predBB.Adornee = predPart
-    local predLbl = Instance.new("TextLabel", predBB)
-    predLbl.Size = UDim2.fromScale(1,1)
-    predLbl.BackgroundTransparency = 1
-    predLbl.Text = "PRED"
-    predLbl.TextColor3 = PRED_COL
-    predLbl.Font = Enum.Font.GothamBold
-    predLbl.TextSize = 11
-    predLbl.TextStrokeTransparency = 0.3
-
-    local function RemoveBillboard(ball)
-        if highlights[ball] then
-            pcall(function() highlights[ball].box:Destroy() highlights[ball].billboard:Destroy() end)
-            highlights[ball] = nil
-        end
-    end
-
-    local function CreateBillboard(ball)
-        if highlights[ball] then return end
-        local box = Instance.new("SelectionBox")
-        box.Adornee = ball
-        box.Color3 = BOX_COL
-        box.LineThickness = 0.04
-        box.SurfaceTransparency = 0.78
-        box.SurfaceColor3 = Color3.fromRGB(0,100,220)
-        box.Parent = game.CoreGui
-        local bb = Instance.new("BillboardGui")
-        bb.Adornee = ball
-        bb.Size = UDim2.new(0, 140, 0, 46)
-        bb.StudsOffset = Vector3.new(0, 3.2, 0)
-        bb.AlwaysOnTop = true
-        bb.Parent = game.CoreGui
-        local f = Instance.new("Frame", bb)
-        f.Size = UDim2.fromScale(1,1)
-        f.BackgroundTransparency = 1
-        local top = Instance.new("TextLabel", f)
-        top.Size = UDim2.new(1,0,0.5,0)
-        top.BackgroundTransparency = 1
-        top.TextColor3 = Color3.fromRGB(255,255,255)
-        top.TextStrokeTransparency = 0.3
-        top.Font = Enum.Font.GothamBold
-        top.TextSize = 12
-        top.Text = "BALL"
-        local bot = Instance.new("TextLabel", f)
-        bot.Size = UDim2.new(1,0,0.5,0)
-        bot.Position = UDim2.new(0,0,0.5,0)
-        bot.BackgroundTransparency = 1
-        bot.TextColor3 = WARN_COL
-        bot.TextStrokeTransparency = 0.3
-        bot.Font = Enum.Font.Gotham
-        bot.TextSize = 11
-        bot.Text = ""
-        highlights[ball] = {box=box, billboard=bb, top=top, bot=bot}
-    end
-
-    if workspace:FindFirstChild("Balls") then
-        local c = workspace.Balls.ChildAdded:Connect(function() task.wait(0.1) Parried = false end)
-        table.insert(connections, c)
-    end
-
-    local renderConn = RunService2.PreSimulation:Connect(function()
-        local ball = GetRealBall()
-        for b in pairs(highlights) do if b ~= ball then RemoveBillboard(b) end end
-        if not ball then
-            predPart.Transparency = 1
-            distVal.Text="—" velVal.Text="—" targetVal.Text="—" predVal.Text="—"
-            if not Parried then parryVal.Text="no ball" end
-            return
-        end
-        local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-        local ballPos = ball.Position
-        local dist = hrp and (hrp.Position - ballPos).Magnitude or 0
-        local velVec = GetBallVelocity(ball)
-        local speed = velVec.Magnitude
-        local target = ball:GetAttribute("target") or "?"
-        local isTarget = target == Player.Name
-        local t = CFG.PredTime
-        local predPos = ballPos + velVec*t + Vector3.new(0, -workspace.Gravity*0.5*t*t, 0)
-        if CFG.PredEnabled then
-            predPart.CFrame = CFrame.new(predPos)
-            predPart.Transparency = 0.35
-            local pd = hrp and (hrp.Position - predPos).Magnitude or 0
-            predLbl.Text = string.format("%.1fst", pd)
-            predVal.Text = string.format("%.1f studs", pd)
-        else
-            predPart.Transparency = 1
-            predVal.Text = "off"
-        end
-        if CFG.ParryEnabled and isTarget and hrp and speed >= CFG.MinSpeed then
-            local tti = dist / (speed + 6)
-            if not Parried and tti <= CFG.ParryWindow then
-                VirtualInputManager:SendMouseButtonEvent(0,0,0,true,game,0)
-                task.wait(CFG.ParryDelay)
-                VirtualInputManager:SendMouseButtonEvent(0,0,0,false,game,0)
-                Parried = true
-                parryCount += 1
-                countVal.Text = tostring(parryCount)
-                parryVal.Text = "PARRIED!"
-                parryVal.TextColor3 = GREEN
-                task.delay(CFG.ParryCooldown, function()
-                    Parried = false
-                    parryVal.Text = "ready"
-                    parryVal.TextColor3 = TEXT_COL
-                end)
-            end
-        end
-        if not CFG.ParryEnabled then parryVal.Text="off" parryVal.TextColor3=MUTED
-        elseif not isTarget then Parried=false parryVal.Text="not target" parryVal.TextColor3=MUTED
-        elseif not Parried and parryVal.Text ~= "PARRIED!" then parryVal.Text="ready" parryVal.TextColor3=TEXT_COL end
-        if CFG.ESPEnabled then
-            CreateBillboard(ball)
-            local e = highlights[ball]
-            if e then
-                e.top.Text = string.format("BALL  %.1fst", dist)
-                e.top.TextColor3 = isTarget and WARN_COL or Color3.fromRGB(255,255,255)
-                e.bot.Text = string.format("spd:%.1f  →%s", speed, target)
-                e.box.Color3 = isTarget and WARN_COL or BOX_COL
-            end
-        end
-        distVal.Text = string.format("%.1f studs", dist)
-        velVal.Text  = string.format("%.1f s/s", speed)
-        targetVal.Text = target
-        targetVal.TextColor3 = isTarget and WARN_COL or TEXT_COL
-    end)
-    table.insert(connections, renderConn)
-
-    local function Unload()
-        for _, c in ipairs(connections) do pcall(function() c:Disconnect() end) end
-        for b in pairs(highlights) do RemoveBillboard(b) end
-        pcall(function() predPart:Destroy() predBB:Destroy() end)
-        pcall(function() sg:Destroy() end)
-        print("[BladeBall ESP] Unloaded.")
-    end
-    unloadRow.MouseButton1Click:Connect(Unload)
-    _G.UnloadBladeBall = Unload
-    print("[BladeBall ESP] Loaded.")
-end
-
--- ─────────────────────────────────────────────
--- SELECTOR UI
--- ─────────────────────────────────────────────
-
-local selectorOpen = false
-local selectorGui = nil
-
-local function CloseSelectorGui()
-    if selectorGui then
-        selectorGui:Destroy()
-        selectorGui = nil
-    end
-    selectorOpen = false
-end
-
-local function OpenSelectorGui()
-    if selectorOpen then CloseSelectorGui() return end
-    selectorOpen = true
-
-    local sg = Instance.new("ScreenGui")
-    sg.Name = "ScriptSelector"
-    sg.ResetOnSpawn = false
-    sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    sg.DisplayOrder = 1000
-    sg.Parent = game.CoreGui
-    selectorGui = sg
-
-    -- Backdrop
-    local backdrop = Instance.new("Frame", sg)
-    backdrop.Size = UDim2.fromScale(1, 1)
-    backdrop.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    backdrop.BackgroundTransparency = 0.5
-    backdrop.BorderSizePixel = 0
-    backdrop.ZIndex = 1
-
-    -- Close on backdrop click
-    local closeBtn = Instance.new("TextButton", backdrop)
-    closeBtn.Size = UDim2.fromScale(1,1)
-    closeBtn.BackgroundTransparency = 1
-    closeBtn.Text = ""
-    closeBtn.ZIndex = 2
-    closeBtn.MouseButton1Click:Connect(CloseSelectorGui)
-
-    -- Card
-    local card = Instance.new("Frame", sg)
-    card.Size = UDim2.new(0, 360, 0, 320)
-    card.AnchorPoint = Vector2.new(0.5, 0.5)
-    card.Position = UDim2.new(0.5, 0, 0.42, 0)
-    card.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
-    card.BorderSizePixel = 0
-    card.ZIndex = 3
-    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 14)
-    local cardStroke = Instance.new("UIStroke", card)
-    cardStroke.Color = Color3.fromRGB(60, 60, 85)
-    cardStroke.Thickness = 1
-
-    -- Title
-    local titleArea = Instance.new("Frame", card)
-    titleArea.Size = UDim2.new(1, 0, 0, 70)
-    titleArea.BackgroundTransparency = 1
-    titleArea.ZIndex = 4
-
-    local titleLbl = Instance.new("TextLabel", titleArea)
-    titleLbl.Size = UDim2.new(1, 0, 0, 36)
-    titleLbl.Position = UDim2.new(0, 0, 0, 14)
-    titleLbl.BackgroundTransparency = 1
-    titleLbl.Text = "Select Script"
-    titleLbl.TextColor3 = Color3.fromRGB(230, 230, 255)
-    titleLbl.Font = Enum.Font.GothamBold
-    titleLbl.TextSize = 20
-    titleLbl.ZIndex = 4
-
-    local subLbl = Instance.new("TextLabel", titleArea)
-    subLbl.Size = UDim2.new(1, 0, 0, 18)
-    subLbl.Position = UDim2.new(0, 0, 0, 48)
-    subLbl.BackgroundTransparency = 1
-    subLbl.Text = "choose which script to launch"
-    subLbl.TextColor3 = Color3.fromRGB(100, 100, 130)
-    subLbl.Font = Enum.Font.Gotham
-    subLbl.TextSize = 12
-    subLbl.ZIndex = 4
-
-    -- Divider
-    local div = Instance.new("Frame", card)
-    div.Size = UDim2.new(1, -40, 0, 1)
-    div.Position = UDim2.new(0, 20, 0, 72)
-    div.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-    div.BorderSizePixel = 0
-    div.ZIndex = 4
-
-    -- Script option builder
-    local function MakeScriptOption(parent, yPos, icon, name, desc, accentCol, callback)
-        local btn = Instance.new("TextButton", parent)
-        btn.Size = UDim2.new(1, -40, 0, 76)
-        btn.Position = UDim2.new(0, 20, 0, yPos)
-        btn.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
-        btn.BorderSizePixel = 0
-        btn.Text = ""
-        btn.ZIndex = 4
-        btn.AutoButtonColor = false
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
-        local btnStroke = Instance.new("UIStroke", btn)
-        btnStroke.Color = Color3.fromRGB(45, 45, 65)
-        btnStroke.Thickness = 1
-
-        -- Icon circle
-        local iconCircle = Instance.new("Frame", btn)
-        iconCircle.Size = UDim2.new(0, 44, 0, 44)
-        iconCircle.Position = UDim2.new(0, 14, 0.5, -22)
-        iconCircle.BackgroundColor3 = accentCol
-        iconCircle.BackgroundTransparency = 0.75
-        iconCircle.BorderSizePixel = 0
-        iconCircle.ZIndex = 5
-        Instance.new("UICorner", iconCircle).CornerRadius = UDim.new(0, 10)
-
-        local iconLbl = Instance.new("TextLabel", iconCircle)
-        iconLbl.Size = UDim2.fromScale(1,1)
-        iconLbl.BackgroundTransparency = 1
-        iconLbl.Text = icon
-        iconLbl.TextColor3 = accentCol
-        iconLbl.Font = Enum.Font.GothamBold
-        iconLbl.TextSize = 20
-        iconLbl.ZIndex = 6
-
-        -- Name
-        local nameLbl = Instance.new("TextLabel", btn)
-        nameLbl.Size = UDim2.new(1, -80, 0, 24)
-        nameLbl.Position = UDim2.new(0, 72, 0, 14)
-        nameLbl.BackgroundTransparency = 1
-        nameLbl.Text = name
-        nameLbl.TextColor3 = Color3.fromRGB(220, 220, 255)
-        nameLbl.Font = Enum.Font.GothamBold
-        nameLbl.TextSize = 14
-        nameLbl.TextXAlignment = Enum.TextXAlignment.Left
-        nameLbl.ZIndex = 5
-
-        -- Desc
-        local descLbl = Instance.new("TextLabel", btn)
-        descLbl.Size = UDim2.new(1, -80, 0, 32)
-        descLbl.Position = UDim2.new(0, 72, 0, 36)
-        descLbl.BackgroundTransparency = 1
-        descLbl.Text = desc
-        descLbl.TextColor3 = Color3.fromRGB(100, 100, 130)
-        descLbl.Font = Enum.Font.Gotham
-        descLbl.TextSize = 11
-        descLbl.TextXAlignment = Enum.TextXAlignment.Left
-        descLbl.TextWrapped = true
-        descLbl.ZIndex = 5
-
-        -- Arrow
-        local arrow = Instance.new("TextLabel", btn)
-        arrow.Size = UDim2.new(0, 20, 1, 0)
-        arrow.Position = UDim2.new(1, -28, 0, 0)
-        arrow.BackgroundTransparency = 1
-        arrow.Text = "›"
-        arrow.TextColor3 = Color3.fromRGB(80, 80, 110)
-        arrow.Font = Enum.Font.GothamBold
-        arrow.TextSize = 22
-        arrow.ZIndex = 5
-
-        btn.MouseEnter:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(30, 30, 44)}):Play()
-            TweenService:Create(btnStroke, TweenInfo.new(0.12), {Color = accentCol, Transparency = 0.5}):Play()
-            TweenService:Create(arrow, TweenInfo.new(0.12), {TextColor3 = accentCol}):Play()
-        end)
-        btn.MouseLeave:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(22, 22, 32)}):Play()
-            TweenService:Create(btnStroke, TweenInfo.new(0.12), {Color = Color3.fromRGB(45,45,65), Transparency = 0}):Play()
-            TweenService:Create(arrow, TweenInfo.new(0.12), {TextColor3 = Color3.fromRGB(80,80,110)}):Play()
-        end)
-        btn.MouseButton1Click:Connect(function()
-            CloseSelectorGui()
-            task.wait(0.05)
-            callback()
-        end)
-    end
-
-    MakeScriptOption(
-        card, 86,
-        "✦", "Chatbot (Moxy)",
-        "AI chat assistant with personalities,\nauto-reply and follow mode",
-        Color3.fromRGB(138, 43, 226),
-        LaunchChatbot
-    )
-
-    MakeScriptOption(
-        card, 178,
-        "⚔", "Blade Ball ESP",
-        "Ball ESP, prediction sphere,\nauto parry with tunable settings",
-        Color3.fromRGB(0, 160, 255),
-        LaunchBladeBall
-    )
-
-    -- Close button bottom
-    local closeTextBtn = Instance.new("TextButton", card)
-    closeTextBtn.Size = UDim2.new(1, -40, 0, 28)
-    closeTextBtn.Position = UDim2.new(0, 20, 0, 274)
-    closeTextBtn.BackgroundTransparency = 1
-    closeTextBtn.Text = "cancel"
-    closeTextBtn.TextColor3 = Color3.fromRGB(70, 70, 95)
-    closeTextBtn.Font = Enum.Font.Gotham
-    closeTextBtn.TextSize = 12
-    closeTextBtn.ZIndex = 4
-    closeTextBtn.MouseEnter:Connect(function() closeTextBtn.TextColor3 = Color3.fromRGB(140,140,170) end)
-    closeTextBtn.MouseLeave:Connect(function() closeTextBtn.TextColor3 = Color3.fromRGB(70,70,95) end)
-    closeTextBtn.MouseButton1Click:Connect(CloseSelectorGui)
-
-    -- Slide in animation
-    card.Position = UDim2.new(0.5, 0, 0.55, 0)
-    card.BackgroundTransparency = 1
-    task.defer(function()
-        TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-            Position = UDim2.new(0.5, 0, 0.5, 0),
-            BackgroundTransparency = 0,
-        }):Play()
-    end)
-end
-
--- ─────────────────────────────────────────────
--- KEY LISTENER
--- ─────────────────────────────────────────────
-
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == TOGGLE_KEY then
-        OpenSelectorGui()
-    end
-end)
-
-print("[Hub] Loaded. Press " .. TOGGLE_KEY.Name .. " to open the script selector.")
+showKeyScreen()
